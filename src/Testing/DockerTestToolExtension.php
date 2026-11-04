@@ -51,9 +51,20 @@ final class DockerTestToolExtension implements Extension
             throw new \InvalidArgumentException('mysql.port and mysql.timeout must be positive integers (port <= 65535).');
         }
 
+        $migrations = $parameters->has('migrations') ? $parameters->get('migrations') : 'false';
+        if (!in_array($migrations, ['true', 'false'], true)) {
+            throw new \InvalidArgumentException('The "migrations" parameter must be "true" or "false".');
+        }
+        if ('true' === $migrations && $parameters->has('afterStart')) {
+            throw new \InvalidArgumentException('Use either "migrations" or "afterStart", not both.');
+        }
+
         $afterStart = $parameters->has('afterStart')
             ? json_decode($parameters->get('afterStart'), true, flags: JSON_THROW_ON_ERROR)
-            : [];
+            : ('true' === $migrations ? [
+                '@php', 'bin/console', 'doctrine:migrations:migrate',
+                '--env=test', '--no-interaction', '--allow-no-migration',
+            ] : []);
         if (!is_array($afterStart) || !array_is_list($afterStart)) {
             throw new \InvalidArgumentException('The "afterStart" parameter must be a JSON array of command arguments.');
         }

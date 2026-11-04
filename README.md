@@ -36,7 +36,7 @@ Install PHPUnit in the consuming project. Docker Engine must be available.
 <extensions>
     <bootstrap class="NuraBiz\Common\Testing\DockerTestToolExtension">
         <parameter name="mysql" value="true" />
-        <parameter name="afterStart" value='["@php","bin/console","doctrine:migrations:migrate","--env=test","--no-interaction"]' />
+        <parameter name="migrations" value="true" />
     </bootstrap>
 </extensions>
 ```
@@ -54,8 +54,15 @@ and removes its unique container on PHP shutdown, including after failures.
 Listing tests does not start Docker. Forced process termination (SIGKILL) cannot
 run shutdown cleanup.
 
-Optional `afterStart` is a JSON array of command arguments, executed once after
+Optional `migrations=true` runs the consuming project's Doctrine migrations after
+MySQL becomes ready, using the current PHP binary and `bin/console
+ doctrine:migrations:migrate --env=test --no-interaction --allow-no-migration`.
+It defaults to false. The consumer must provide Symfony Console and Doctrine
+Migrations; the library does not depend on them.
+
+For custom setup, optional `afterStart` is a JSON array of command arguments, executed once after
 MySQL becomes ready, with a 60-second timeout. `@php` resolves to the current PHP
 binary. APP_ENV and DATABASE_URL from the test bootstrap are forwarded to it.
 Optional `directory` sets the working directory; the default is the current
-working directory. Migrations and application configuration belong to the consumer.
+working directory. Migration files and application configuration belong to the consumer.
+Do not combine `migrations=true` with `afterStart`.
